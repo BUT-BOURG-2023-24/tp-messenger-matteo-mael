@@ -6,19 +6,20 @@ import { SocketController } from "./socket/socketController";
 
 const app = express();
 
-function makeApp(database: Database) 
-{
-	app.locals.database = database;
+function makeApp(database: Database) {
+  app.locals.database = database;
 
-	const server = http.createServer(app);
-	app.use(express.json());
+  database.connect();
 
-	const io = new Server(server, { cors: { origin: "*" } });
-	let socketController = new SocketController(io, database);
+  const server = http.createServer(app);
+  app.use(express.json());
 
-	app.locals.sockerController = socketController;
+  const io = new Server(server, { cors: { origin: "*" } });
+  let socketController = new SocketController(io, database);
 
-	return { app, server };
+  app.locals.sockerController = socketController;
+
+  return { app, server };
 }
 
 export { makeApp };
