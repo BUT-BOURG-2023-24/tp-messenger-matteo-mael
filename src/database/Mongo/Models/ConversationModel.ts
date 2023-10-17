@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, Document, Mongoose } from "mongoose";
 import { MongooseID } from "../../../types";
 import UserModel from "./UserModel";
 import { MessageModel } from "./MessageModel";
@@ -8,7 +8,7 @@ export interface IConversation extends Document {
   messages: MongooseID[];
   title: String;
   lastUpdate: Date;
-  seen: { userId: MongooseID; messageId: MongooseID };
+  seen: Map<MongooseID, MongooseID>;
 }
 
 const conversationSchema: Schema<IConversation> = new Schema<IConversation>({
@@ -17,10 +17,8 @@ const conversationSchema: Schema<IConversation> = new Schema<IConversation>({
   title: { type: String, required: true },
   lastUpdate: { type: Date, required: true },
   seen: {
-    type: {
-      userId: { type: Schema.ObjectId, ref: "UserModel", required: true },
-      messageId: { type: Schema.ObjectId, ref: "MessageModel", required: true },
-    },
+    type: Map,
+    of: String,
   },
 });
 

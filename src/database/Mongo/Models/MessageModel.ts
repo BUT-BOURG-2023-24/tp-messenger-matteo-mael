@@ -12,7 +12,7 @@ export interface IMessage extends Document {
   replyTo: String | null;
   edited: Boolean;
   deleted: Boolean;
-  reactions: { userId: MongooseID; reaction: Reaction };
+  reactions: Map<MongooseID, Reaction>;
 }
 
 const MessageSchema: Schema<IMessage> = new Schema<IMessage>({
@@ -27,12 +27,7 @@ const MessageSchema: Schema<IMessage> = new Schema<IMessage>({
   replyTo: { type: String },
   edited: { type: Boolean, required: true },
   deleted: { type: Boolean, required: true },
-  reactions: {
-    type: {
-      userId: { type: Schema.ObjectId, ref: "UserModel", required: true },
-      reaction: Reaction,
-    },
-  },
+  reactions: { type: Map, of: Reaction },
 });
 
 const MessageModel = mongoose.model<IMessage>("Message", MessageSchema);
