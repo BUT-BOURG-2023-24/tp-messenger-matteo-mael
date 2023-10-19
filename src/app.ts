@@ -14,12 +14,14 @@ function makeApp(database: Database) {
   const server = http.createServer(app);
   app.use(express.json());
 
-  const io = new Server(server, { cors: { origin: "*" } });
-  let socketController = new SocketController(io, database);
+	const userRoutes = require('./routes/userRoutes');
+	app.use('/api/user', userRoutes);
+	const io = new Server(server, { cors: { origin: "*" } });
+	let socketController = new SocketController(io, database);
 
-  app.locals.sockerController = socketController;
+	app.locals.sockerController = socketController;
 
-  return { app, server };
+	return { app, server };
 }
 
 export { makeApp };

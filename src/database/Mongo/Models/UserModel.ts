@@ -1,16 +1,15 @@
-import mongoose, { Schema, Document } from "mongoose";
-import { MongooseID } from "../../../types";
+import mongoose, {Schema, Document} from "mongoose";
 
 export interface IUser extends Document {
-  username: String;
-  password: String;
-  profilePicId: Number;
+    username: string;
+    password: string;
+    profilePicId: string;
 }
 
 const userSchema: Schema<IUser> = new Schema<IUser>({
-  username: { type: String, required: true },
-  password: { type: String, required: true },
-  profilePicId: { type: Number, required: true },
+    username: {type: String, required: true},
+    password: {type: String, required: true},
+    profilePicId: {type: String, required: true},
 });
 
 const UserModel = mongoose.model<IUser>("User", userSchema);
