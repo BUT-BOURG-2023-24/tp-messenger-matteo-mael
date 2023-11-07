@@ -6,23 +6,9 @@ import UserRepository from "../repository/userRepository";
 
 const jwt = require('jsonwebtoken');
 
-const userRepository = new UserRepository();
+const userRepository: UserRepository = new UserRepository();
+const EXPIRES_TIME_TOKEN: string = '1h';
 
-async function createUser(req: Request, res: Response): Promise<Response> {
-    try {
-        const {password, username} = req.body;
-        let hash: string = await bcrypt.hash(password, 5);
-        const user :IUser = new userModel({
-            username: username,
-            password: hash,
-            profilePicId: pickRandom()
-        });
-        const newUser = await userRepository.createUser(user);
-        return res.status(201).json(newUser);
-    } catch (error) {
-        return res.status(500).json({message: 'Server error'});
-    }
-}
 
 async function getUserById(req: Request, res: Response): Promise<Response> {
     try {
@@ -37,14 +23,14 @@ async function getUserById(req: Request, res: Response): Promise<Response> {
     }
 }
 
-async function getUsersByUsername(req: Request, res: Response): Promise<Response> {
+async function getUserByName(req: Request, res: Response): Promise<Response> {
     try {
-        const username: string = req.params.username;
-        const users: IUser[] | null = await userRepository.getUsersByUsername(username);
-        if (!users || users.length === 0) {
+        const name: string = req.params.name;
+        const user: IUser | null = await userRepository.getUserByName(name);
+        if (!user) {
             return res.status(404).json({message: 'User not found'});
         }
-        return res.status(200).json(users);
+        return res.status(200).json(user);
     } catch (error) {
         return res.status(500).json({message: 'Server error'});
     }
@@ -63,9 +49,39 @@ async function getUsersByIds(req: Request, res: Response): Promise<Response> {
 }
 
 async function login(req: Request, res: Response): Promise<Response> {
+        const {username} = req.body;
+        const isNewUser: boolean = await checkIfUserExist(username);
+        if (!isNewUser) {
+            return await register(req, res);
+        } else {
+            return await createUser(req, res);
+        }
+}
+
+async function createUser(req: Request, res: Response): Promise<Response> {
+        const {password, username} = req.body;
+        let hashPassword: string = await bcrypt.hash(password, 5);
+        const userFromRequest: IUser = new userModel({
+            username: username,
+            password: hashPassword,
+            profilePicId: pickRandom()
+        });
+        const user: IUser | null = await userRepository.createUser(userFromRequest);
+        if (!user) {
+            return res.status(404).json({message: 'User not found'});
+        }
+        const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
+        return res.status(201).json({
+            user,
+            "token": token,
+            "isNewUser": "true"
+        });
+}
+
+async function register(req: Request, res: Response): Promise<Response> {
     try {
         const {password, username} = req.body;
-        const user:IUser|null = await  userRepository.getOneByUsername(username);
+        const user: IUser | null = await userRepository.getUserByName(username);
         if (!user) {
             return res.status(500).json({message: 'login or password incorrect'});
         }
@@ -73,18 +89,30 @@ async function login(req: Request, res: Response): Promise<Response> {
         if (!passwordMatch) {
             return res.status(500).json({message: 'login or password incorrect'});
         }
-        const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: '1h'});
-        return res.status(500).json({token: token});
+        const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
+        return res.status(200).json({
+            user,
+            token,
+            "isNewUser": "false"
+        });
     } catch (error) {
         return res.status(500).json({message: 'Server error'});
     }
+}
+
+async function checkIfUserExist(username: string): Promise<boolean> {
+    const user: IUser | null = await userRepository.getUserByName(username);
+    if (!user) {
+        return true;
+    }
+    return false;
 }
 
 
 module.exports = {
     createUser,
     getUserById,
-    getUsersByUsername,
+    getUserByName,
     getUsersByIds,
     login
 };

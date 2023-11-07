@@ -8,11 +8,8 @@ class UserRepository {
         return UserModel.create(newUser);
     }
 
-    public getUsersByUsername(username: string): Promise<IUser[] | null> {
-        return UserModel.find({username: username});
-    }
 
-    public getOneByUsername(username: string): Promise<IUser | null> {
+    public getUserByName(username: string): Promise<IUser | null> {
         return UserModel.findOne({ username });
     }
 
