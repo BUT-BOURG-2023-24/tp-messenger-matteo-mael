@@ -52,7 +52,7 @@ async function login(req: Request, res: Response): Promise<Response> {
         const {username} = req.body;
         const isNewUser: boolean = await checkIfUserExist(username);
         if (!isNewUser) {
-            return await register(req, res);
+            return await signin(req, res);
         } else {
             return await createUser(req, res);
         }
@@ -78,7 +78,7 @@ async function createUser(req: Request, res: Response): Promise<Response> {
         });
 }
 
-async function register(req: Request, res: Response): Promise<Response> {
+async function signin(req: Request, res: Response): Promise<Response> {
     try {
         const {password, username} = req.body;
         const user: IUser | null = await userRepository.getUserByName(username);
