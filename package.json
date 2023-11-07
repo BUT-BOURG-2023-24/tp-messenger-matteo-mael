@@ -21,6 +21,8 @@
     "joi": "^17.10.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.5.2",
+    "mongoose-type-email": "^1.1.2",
+    "mongoose-unique-validator": "^4.0.0",
     "socket.io": "^4.7.2"
   },
   "devDependencies": {
