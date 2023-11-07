@@ -25,7 +25,7 @@ const MessageSchema: Schema<IMessage> = new Schema<IMessage>({
   replyTo: { type: Schema.ObjectId, ref: "MessageModel" },
   edited: { type: Boolean, required: true },
   deleted: { type: Boolean, required: true },
-  reactions: { type: Map, of: Reaction },
+  reactions: { type: Map, of: String },
 });
 
 const MessageModel = mongoose.model<IMessage>("Message", MessageSchema);

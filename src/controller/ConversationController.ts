@@ -10,8 +10,6 @@ async function getConversationWithParticipants(
   req: Request,
   res: Response
 ): Promise<Response> {
-  // Si user pas auth
-  // res.status(401).json({ error: "Unauthorized" });
   try {
     return res.status(200).json();
   } catch (error) {
@@ -23,8 +21,6 @@ async function getAllConversationsForUser(
   req: Request,
   res: Response
 ): Promise<Response> {
-  // Si user pas auth
-  // res.status(401).json({ error: "Unauthorized" });
   try {
     const conversations =
       await conversationRepository.getAllConversationsForUser();
@@ -38,8 +34,6 @@ async function getConversationById(
   req: Request,
   res: Response
 ): Promise<Response> {
-  // Si user pas auth
-  // res.status(401).json({ error: "Unauthorized" });
   try {
     const conversation = await conversationRepository.getConversationById(
       req.params.id
@@ -57,19 +51,14 @@ async function createConversation(
   req: Request,
   res: Response
 ): Promise<Response> {
-  // Si user pas auth
-  // res.status(401).json({ error: "Unauthorized" });
   try {
-    if (!req.body.concernedUserIds) {
-      return res.status(401).json({ error: "Bad request" });
+    if (!req.body.concernedUserIds || req.body.concernedUserIds.length < 2) {
+      return res.status(400).json({ error: "Bad request" });
     }
     const newConversation = await conversationRepository.createConversation(
       req.body.concernedUserIds
     );
-    if (!newConversation) {
-      return res.status(401).json({ error: "Bad request " });
-    }
-    return res.status(200).json(newConversation);
+    return res.status(200).json({ conversation: newConversation });
   } catch (err) {
     return res.status(500).json({ error: "Server Error" });
   }
@@ -79,8 +68,6 @@ async function addMessageToConversation(
   req: Request,
   res: Response
 ): Promise<Response> {
-  // Si user pas auth
-  // res.status(401).json({ error: "User is not authenticated" });
   try {
     if (!req.body.content) {
       return res.status(401).json({ error: "Bad Request" });
@@ -101,8 +88,6 @@ async function setConversationSeenForUserAndMessage(
   req: Request,
   res: Response
 ): Promise<Response> {
-  // Si user pas auth
-  // res.status(401).json({ error: "Unauthorized" });
   try {
     if (!req.body.messageId) {
       return res.status(401).json({ error: "Bad request" });
@@ -122,15 +107,13 @@ async function deleteConversation(
   req: Request,
   res: Response
 ): Promise<Response> {
-  // Si user pas auth
-  // res.status(401).json({ error: "Unauthorized" });
   try {
     const deletedConversation =
       await conversationRepository.deleteConversationById(req.params.id);
     if (!deletedConversation) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "Conversation not found" });
     }
-    return res.status(200).json(deletedConversation);
+    return res.status(200).json({ conversation: deletedConversation });
   } catch (err) {
     return res.status(500).json({ error: "Server Error" });
   }

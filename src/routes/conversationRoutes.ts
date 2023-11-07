@@ -1,13 +1,38 @@
-const express = require("express");
-const router = express.Router();
+import express from "express";
+import { checkAuth } from "../middleware/auth";
+
+const conversationRoutes = express.Router();
 
 const conversationController = require("../controller/ConversationController");
 
-router.get("/", conversationController.getAllConversationsForUser);
-router.post("/", conversationController.createConversation);
-router.post(
+conversationRoutes.get(
+  "/",
+  checkAuth,
+  conversationController.getAllConversationsForUser
+);
+
+conversationRoutes.post(
+  "/",
+  checkAuth,
+  conversationController.createConversation
+);
+
+conversationRoutes.post(
   "/see/:id",
+  checkAuth,
   conversationController.setConversationSeenForUserAndMessage
 );
-router.delete("/:id", conversationController.deleteConversation);
-router.post("/:id", conversationController.addMessageToConversation);
+
+conversationRoutes.delete(
+  "/:id",
+  checkAuth,
+  conversationController.deleteConversation
+);
+
+conversationRoutes.post(
+  "/:id",
+  checkAuth,
+  conversationController.addMessageToConversation
+);
+
+export default conversationRoutes;

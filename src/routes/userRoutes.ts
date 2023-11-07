@@ -1,12 +1,13 @@
 import express from "express";
-const router = express.Router();
 
-const userController = require('../controller/userController');
+const userRouter = express.Router();
 
-import {checkAuth} from "../middleware/auth";
+const userController = require("../controller/userController");
+
+import { checkAuth } from "../middleware/auth";
 
 //exemple de route pour tester le token
 // router.get('/:id',checkAuth, userController.getUserById);
-router.post('/login', userController.login);
+userRouter.post("/login", userController.login);
 
-module.exports = router;
+export default userRouter;

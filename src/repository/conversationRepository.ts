@@ -16,7 +16,7 @@ class ConversationRepository {
   }
 
   public deleteConversationById(conversationId: MongooseID) {
-    return ConversationModel.deleteOne({ _id: conversationId });
+    return ConversationModel.findOneAndDelete({ _id: conversationId });
   }
 
   public createConversation(concernedUserIds: MongooseID[]) {
