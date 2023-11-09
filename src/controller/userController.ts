@@ -68,14 +68,10 @@ class UserController {
             return res.status(500).json({message: 'Server error'});
         }
     }
-
-
     public async getOnlineUsers(req: Request, res: Response): Promise<Response> {
         //todo
         return res.status(200).json([]);
     }
-
-
     public static async createUser(req: Request, res: Response): Promise<Response> {
         const {password, username} = req.body;
         let hashPassword: string = await bcrypt.hash(password, 5);
@@ -116,7 +112,6 @@ class UserController {
             return res.status(500).json({message: 'Server error'});
         }
     }
-
     public static async checkIfUserExist(username: string): Promise<boolean> {
         const user: IUser | null = await userRepository.getUserByName(username);
         if (!user) {
@@ -127,7 +122,7 @@ class UserController {
 }
 
 let userController: UserController = new UserController();
-export {userController};
+export default userController;
 export type {UserController};
 
 
