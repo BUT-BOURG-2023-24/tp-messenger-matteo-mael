@@ -1,8 +1,8 @@
 import express from "express";
 const router = express.Router();
 
-const userController = require('../controller/userController');
 import {checkAuth} from "../middleware/auth";
+import {userController} from "../controller/userController";
 
 //exemple de route pour tester le token
 // router.get('/:id',checkAuth, userController.getUserById);
