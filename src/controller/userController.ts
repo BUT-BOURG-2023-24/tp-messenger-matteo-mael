@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import userModel, {IUser} from "../database/Mongo/Models/UserModel";
 import {pickRandom} from "../pictures";
 import UserRepository from "../repository/userRepository";
+import {SocketController} from "../socket/socketController";
 
 const jwt = require('jsonwebtoken');
 
@@ -10,6 +11,12 @@ const userRepository: UserRepository = new UserRepository();
 const EXPIRES_TIME_TOKEN: string = '1h';
 
 class UserController {
+
+    public async getOnlineUsers(req: Request, res: Response): Promise<Response> {
+        const userIds: string[] = Array.from(SocketController.userSocketMap.values());
+        const users: IUser[] | null = await userRepository.getUsersbyIds(userIds);
+        return res.status(200).json(users);
+    }
     public async getUserById(req: Request, res: Response): Promise<Response> {
         try {
             const userId: string = req.params.id;
@@ -67,10 +74,6 @@ class UserController {
         } catch (error) {
             return res.status(500).json({message: 'Server error'});
         }
-    }
-    public async getOnlineUsers(req: Request, res: Response): Promise<Response> {
-        //todo
-        return res.status(200).json([]);
     }
     public static async createUser(req: Request, res: Response): Promise<Response> {
         const {password, username} = req.body;

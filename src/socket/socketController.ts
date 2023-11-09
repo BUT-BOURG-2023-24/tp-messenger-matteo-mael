@@ -1,5 +1,5 @@
 import type { Database } from "../database/database";
-import { Server } from "socket.io";
+import {Server, Socket} from "socket.io";
 
 export class SocketController
 {
@@ -7,6 +7,7 @@ export class SocketController
 		Pour savoir si un utilisateur est connecté depuis la route /online,
 		Nous devons stocker une correspondance socketId <=> userId.
 	*/
+	static userSocketMap: Map<string, string>=new Map<string, string>();
 
 	constructor(private io:Server, private Database:Database)
 	{
@@ -17,8 +18,9 @@ export class SocketController
 	connect()
 	{
 		this.io.on("connection", (socket) => {
-			// Récupérer les infos voulu depuis les extra headers.
-			// socket.handshake.headers contient ce que vous voulez. 
+			if( socket.handshake.headers.userid) {
+				SocketController.userSocketMap.set(socket.id, socket.handshake.headers.userid.toString());
+			}
 
 			/*
 				Dès qu'un socket utilisateur arrive, on veut l'ajouter à la room
@@ -59,4 +61,5 @@ export class SocketController
 		});
 	}
 }
+
 
