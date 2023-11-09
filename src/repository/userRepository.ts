@@ -16,6 +16,9 @@ class UserRepository {
     public getUsersbyIds(listeIds: string[]): Promise<IUser[] | null> {
         return UserModel.find({ _id: { $in: listeIds } });
     }
+    public getAllUsers(): Promise<IUser[] | null> {
+        return UserModel.find();
+    }
 }
 
 export default UserRepository;

@@ -58,6 +58,22 @@ async function login(req: Request, res: Response): Promise<Response> {
         }
 }
 
+async function getAllUsers(req: Request, res: Response): Promise<Response> {
+    try {
+        const users: IUser[] | null = await userRepository.getAllUsers();
+        if (!users || users.length === 0) {
+            return res.status(404).json({message: 'User not found'});
+        }
+        return res.status(200).json(users);
+    } catch (error) {
+        return res.status(500).json({message: 'Server error'});
+    }
+}
+
+async function getOnlineUsers(req: Request, res: Response): Promise<Response> {
+    //todo
+        return res.status(200).json([]);
+}
 async function createUser(req: Request, res: Response): Promise<Response> {
         const {password, username} = req.body;
         let hashPassword: string = await bcrypt.hash(password, 5);
@@ -114,7 +130,8 @@ module.exports = {
     getUserById,
     getUserByName,
     getUsersByIds,
-    login
+    login,
+    getAllUsers,
+    getOnlineUsers
 };
-
 
