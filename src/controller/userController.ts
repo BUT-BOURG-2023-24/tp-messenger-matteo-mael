@@ -13,9 +13,13 @@ const EXPIRES_TIME_TOKEN: string = '1h';
 class UserController {
 
     public async getOnlineUsers(req: Request, res: Response): Promise<Response> {
+        try {
         const userIds: string[] = Array.from(SocketController.userSocketMap.values());
         const users: IUser[] | null = await userRepository.getUsersbyIds(userIds);
         return res.status(200).json(users);
+        } catch (error) {
+            return res.status(500).json({message: 'Server error'});
+        }
     }
     public async getUserById(req: Request, res: Response): Promise<Response> {
         try {
@@ -76,6 +80,7 @@ class UserController {
         }
     }
     public static async createUser(req: Request, res: Response): Promise<Response> {
+        try {
         const {password, username} = req.body;
         let hashPassword: string = await bcrypt.hash(password, 5);
         const userFromRequest: IUser = new userModel({
@@ -93,17 +98,20 @@ class UserController {
             "token": token,
             "isNewUser": "true"
         });
+        } catch (error) {
+            return res.status(500).json({message: 'Server error'});
+        }
     }
     public static async signin(req: Request, res: Response): Promise<Response> {
         try {
             const {password, username} = req.body;
             const user: IUser | null = await userRepository.getUserByName(username);
             if (!user) {
-                return res.status(500).json({message: 'login or password incorrect'});
+                return res.status(400).json({message: 'login or password incorrect'});
             }
             const passwordMatch: boolean = await bcrypt.compare(password, user.password);
             if (!passwordMatch) {
-                return res.status(500).json({message: 'login or password incorrect'});
+                return res.status(400).json({message: 'login or password incorrect'});
             }
             const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
             return res.status(200).json({

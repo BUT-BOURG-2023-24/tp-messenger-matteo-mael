@@ -9,7 +9,7 @@ import userController from "../controller/userController";
 
 
 router.post('/login', userController.login);
-router.get('/all', userController.getAllUsers);
-router.get('/online', userController.getOnlineUsers);
+router.get('/all', checkAuth,userController.getAllUsers);
+router.get('/online', checkAuth,userController.getOnlineUsers);
 
 module.exports = router;
