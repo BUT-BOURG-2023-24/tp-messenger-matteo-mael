@@ -14,7 +14,9 @@ function makeApp(database: Database) {
     const server = http.createServer(app);
     app.use(express.json());
     app.use(cors());
-    const userRoutes = require('./routes/userRoutes');
+    const conversationRoutes = require("./routes/conversationRoutes");
+    const userRoutes = require("./routes/userRoutes");
+    app.use("/conversations", conversationRoutes);
     app.use('/users', userRoutes);
     const io = new Server(server, {cors: {origin: "*"}});
     let socketController = new SocketController(io, database);

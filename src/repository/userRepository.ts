@@ -1,4 +1,5 @@
 import UserModel, {IUser} from "../database/Mongo/Models/UserModel";
+import {MongooseID} from "../types";
 class UserRepository {
 
     public getUserById(userId: string): Promise<IUser | null> {
@@ -13,7 +14,7 @@ class UserRepository {
         return UserModel.findOne({ username });
     }
 
-    public getUsersbyIds(listeIds: string[]): Promise<IUser[] | null> {
+    public getUsersbyIds(listeIds: MongooseID[]): Promise<IUser[] | null> {
         return UserModel.find({ _id: { $in: listeIds } });
     }
     public getAllUsers(): Promise<IUser[] | null> {
@@ -21,4 +22,6 @@ class UserRepository {
     }
 }
 
-export default UserRepository;
+const userRepository: UserRepository = new UserRepository();
+export default userRepository;
+export type {UserRepository}
