@@ -26,12 +26,6 @@ class ConversationController {
             }
             const user: IUser | null = await userRepository.getUserById(userId);
             const conversations = await conversationRepository.getAllConversationsForUser(user?.id);
-            if(conversations !== undefined) {
-                for (let conversation of conversations) {
-                    // Utilisation de 'as' pour informer TypeScript que participants est une liste de chaînes
-                    conversation.participants = await userController.getUsersByIds(conversation.participants as any[]) as any;
-                }
-            }
             return new ApiResponse(undefined, {conversations});
         } catch (err) {
             return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));

@@ -5,7 +5,7 @@ import {IUser} from "./UserModel";
 
 export interface IConversation extends Document {
   participants: IUser[];
-  messages: MongooseID[];
+  messages: IMessage[];
   title: String;
   lastUpdate: Date;
   seen: Map<MongooseID, MongooseID>;
@@ -13,7 +13,7 @@ export interface IConversation extends Document {
 
 const ConversationSchema: Schema<IConversation> = new Schema<IConversation>({
   participants: [{ type: Schema.Types.ObjectId, ref: "user" }],
-  messages: [{ type: Schema.Types.ObjectId, ref: "MessageModel" }],
+  messages: [{ type: Schema.Types.ObjectId, ref: "message" }],
   title: { type: String, required: true },
   lastUpdate: { type: Date, required: true },
   seen: {

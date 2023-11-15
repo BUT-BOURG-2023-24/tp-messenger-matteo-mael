@@ -6,11 +6,15 @@ import {IUser} from "../database/Mongo/Models/UserModel";
 import userRepository from "./userRepository";
 class ConversationRepository {
     public getConversationById(conversationId: string): Promise<IConversation | null> {
-        return ConversationModel.findById(conversationId).exec();
+        return ConversationModel.findById(conversationId)
+            .populate({ path: 'participants'})
+            .populate({ path: 'messages' });
     }
 
     public getAllConversationsForUser(userId: string) {
-        return ConversationModel.find({ participants: userId }).exec();
+        return ConversationModel.find({ participants: userId })
+            .populate({ path: 'participants'})
+            .populate({ path: 'messages' });
     }
 
     public deleteConversationById(conversationId: string) {
@@ -24,6 +28,7 @@ class ConversationRepository {
             participants: concernedUserIds,
             title: groupeName,
             lastUpdate: new Date(),
+            seen:  new Map<string,string>()
         });
         return ConversationModel.create(conversation);
     }
@@ -39,9 +44,7 @@ class ConversationRepository {
                 edited: false,
                 deleted: false,
             });
-
             const createdMessage: IMessage = await MessageModel.create(message);
-
             const conversation: IConversation | null = await this.getConversationById(conversationId);
             if (!conversation) {
                 console.error('Conversation not found');
@@ -56,8 +59,12 @@ class ConversationRepository {
             const populatedConversation = await ConversationModel
                 .findById(updatedConversation._id)
                 .populate({
-                    path: 'users',
-                    model: 'messageModel',
+                    path: 'messages',
+                    model: 'MessageModel',
+                    populate: {
+                        path: 'from',
+                        model: 'UserModel',
+                    },
                 })
                 .exec();
 
