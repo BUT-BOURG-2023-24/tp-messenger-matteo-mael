@@ -81,18 +81,16 @@ class ConversationController {
         }
     }
 
-    public async setConversationSeenForUserAndMessage(req: Request, res: Response): Promise<Response> {
+    public async setConversationSeenForUserAndMessage(messageId: string,conversationid: string,userId: string): Promise<ApiResponse> {
         try {
-            if (!req.body.messageId) {
-                return res.status(401).json({error: "Bad request"});
+            if (!messageId) {
+                return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.MESSAGE_ID_NOT_FOUND))
             }
-            return res.status(200).json(
-                conversationRepository.setConversationSeenForUserAndMessage(
-                    req.params.id,
-                    req.body.messageId
-                ));
+            conversationRepository.setConversationSeenForUserAndMessage(conversationid, messageId,userId)
+            const conversation = await conversationRepository.getConversationById(conversationid)
+            return new ApiResponse(undefined, {conversation});
         } catch (err) {
-            return res.status(500).json({error: "Server Error"});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 

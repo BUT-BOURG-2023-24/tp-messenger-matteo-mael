@@ -14,4 +14,5 @@ export enum ErrorEnum {
     USERS_NOT_FOUND = 'users not found',
     AUTHENTICATION_NEEDED = 'authentication needed',
     MESSAGE_CONTENT_NOT_FOUND = 'message content not found',
+    MESSAGE_ID_NOT_FOUND = 'messageId not found',
 }

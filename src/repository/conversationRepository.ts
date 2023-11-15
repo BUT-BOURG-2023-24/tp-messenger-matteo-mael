@@ -47,13 +47,10 @@ class ConversationRepository {
             return await this.getConversationById(conversation.id);
     }
 
-    public setConversationSeenForUserAndMessage(
-        conversationId: string,
-        messageId: string
-    ) {
+    public setConversationSeenForUserAndMessage(conversationId: string, messageId: string,userId: string) {
         this.getConversationById(conversationId).then((conversation) => {
             if (conversation) {
-                conversation.seen.set("0", messageId); // Replace with userId
+                conversation.seen.set(userId, messageId);
                 conversation.save();
             }
         });
