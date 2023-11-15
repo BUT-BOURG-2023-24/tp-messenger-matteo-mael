@@ -2,7 +2,6 @@ import {Request, Response} from "express";
 import ConversationRepository from "../repository/conversationRepository";
 import {IUser} from "../database/Mongo/Models/UserModel";
 import userRepository from "../repository/userRepository";
-import authService from "../service/authService";
 
 const conversationRepository = new ConversationRepository();
 
@@ -49,10 +48,10 @@ class ConversationController {
             if (!concernedUsersIds) {
                 return res.status(400).json({error: "Bad request"});
             }
-            if(!authService.getCurrentAuth()) {
+            if(!res.locals.userId) {
                 return res.status(401).json({error: "Bad request"});
             }
-            concernedUsersIds.push(authService.getCurrentAuth()?.id);
+            concernedUsersIds.push(res.locals.userId.toString());
             const newConversation = await conversationRepository.createConversation(
                 concernedUsersIds
             );

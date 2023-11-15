@@ -2,10 +2,8 @@ import {Request, Response} from "express";
 import bcrypt from "bcrypt";
 import userModel, {IUser} from "../database/Mongo/Models/UserModel";
 import {pickRandom} from "../pictures";
-import UserRepository from "../repository/userRepository";
 import {SocketController} from "../socket/socketController";
 import userRepository from "../repository/userRepository";
-import authService from "../service/authService";
 
 const jwt = require('jsonwebtoken');
 
@@ -94,7 +92,6 @@ class UserController {
                 return res.status(404).json({message: 'User not found'});
             }
             const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
-            authService.setCurrentAuth(await userRepository.getUserByName(username));
             return res.status(201).json({
                 user,
                 "token": token,
@@ -117,7 +114,6 @@ class UserController {
                 return res.status(400).json({message: 'login or password incorrect'});
             }
             const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
-            authService.setCurrentAuth(await userRepository.getUserByName(username));
             return res.status(200).json({
                 user,
                 token,
