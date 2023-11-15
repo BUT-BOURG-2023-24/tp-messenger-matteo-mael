@@ -1,24 +1,26 @@
 import ConversationModel, {
     IConversation,
 } from "../database/Mongo/Models/ConversationModel";
-import MessageModel, { IMessage } from "../database/Mongo/Models/MessageModel";
+import MessageModel, {IMessage} from "../database/Mongo/Models/MessageModel";
 import {IUser} from "../database/Mongo/Models/UserModel";
 import userRepository from "./userRepository";
+import messageController from "../controller/messageController";
+
 class ConversationRepository {
     public getConversationById(conversationId: string): Promise<IConversation | null> {
         return ConversationModel.findById(conversationId)
-            .populate({ path: 'participants'})
-            .populate({ path: 'messages' });
+            .populate({path: 'participants'})
+            .populate({path: 'messages'});
     }
 
     public getAllConversationsForUser(userId: string) {
-        return ConversationModel.find({ participants: userId })
-            .populate({ path: 'participants'})
-            .populate({ path: 'messages' });
+        return ConversationModel.find({participants: userId})
+            .populate({path: 'participants'})
+            .populate({path: 'messages'});
     }
 
     public deleteConversationById(conversationId: string) {
-        return ConversationModel.findOneAndDelete({ _id: conversationId });
+        return ConversationModel.findOneAndDelete({_id: conversationId});
     }
 
     public async createConversation(concernedUserIds: string[]) {
@@ -28,52 +30,23 @@ class ConversationRepository {
             participants: concernedUserIds,
             title: groupeName,
             lastUpdate: new Date(),
-            seen:  new Map<string,string>()
+            seen: new Map<string, string>()
         });
         return ConversationModel.create(conversation);
     }
 
     public async addMessageToConversation(conversationId: string, content: string, userId: string, messageReplyId: string | null) {
-        try {
-            const message: IMessage = new MessageModel({
-                conversationId: conversationId,
-                from: userId,
-                content: content,
-                postedAt: new Date(),
-                replyTo: messageReplyId,
-                edited: false,
-                deleted: false,
-            });
-            const createdMessage: IMessage = await MessageModel.create(message);
+            const createdMessage: IMessage = await messageController.createMessage(conversationId,userId,content,messageReplyId)
             const conversation: IConversation | null = await this.getConversationById(conversationId);
             if (!conversation) {
-                console.error('Conversation not found');
                 return null;
             }
-
             conversation.messages.push(createdMessage.id);
             conversation.lastUpdate = new Date();
-
-            const updatedConversation = await conversation.save();
-
-            const populatedConversation = await ConversationModel
-                .findById(updatedConversation._id)
-                .populate({
-                    path: 'messages',
-                    model: 'MessageModel',
-                    populate: {
-                        path: 'from',
-                        model: 'UserModel',
-                    },
-                })
-                .exec();
-
-            return populatedConversation;
-        } catch (error) {
-            console.error('Error adding message to conversation:', error);
-            throw error;
-        }
+            await conversation.save();
+            return await this.getConversationById(conversation.id);
     }
+
     public setConversationSeenForUserAndMessage(
         conversationId: string,
         messageId: string
