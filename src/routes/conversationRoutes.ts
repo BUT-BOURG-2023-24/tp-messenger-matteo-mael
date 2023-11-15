@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 import { checkAuth } from "../middleware/auth";
-import conversationController from "../controller/conversationController";
+import conversationController from "../controller/ConversationController";
 
 router.get("/",checkAuth, conversationController.getAllConversationsForUser);
 router.post("/",checkAuth, conversationController.createConversation);

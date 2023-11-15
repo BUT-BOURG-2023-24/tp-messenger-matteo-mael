@@ -11,18 +11,18 @@ async function createConversation(req: Request, res: Response) {}
 async function addMessageToConversation(req: Request, res: Response) {}
 
 async function setConversationSeenForUserAndMessage(
-  req: Request,
-  res: Response
+    req: Request,
+    res: Response
 ) {}
 
 async function deleteConversation(req: Request, res: Response) {}
 
 module.exports = {
-  getConversationWithParticipants,
-  getAllConversationsForUser,
-  getConversationById,
-  createConversation,
-  addMessageToConversation,
-  setConversationSeenForUserAndMessage,
-  deleteConversation,
+    getConversationWithParticipants,
+    getAllConversationsForUser,
+    getConversationById,
+    createConversation,
+    addMessageToConversation,
+    setConversationSeenForUserAndMessage,
+    deleteConversation,
 };
