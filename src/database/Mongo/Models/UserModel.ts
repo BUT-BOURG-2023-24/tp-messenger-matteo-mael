@@ -12,6 +12,6 @@ const userSchema: Schema<IUser> = new Schema<IUser>({
     profilePicId: {type: String, required: true},
 });
 
-const UserModel = mongoose.model<IUser>("User", userSchema);
+const UserModel = mongoose.model<IUser>("user", userSchema);
 
 export default UserModel;

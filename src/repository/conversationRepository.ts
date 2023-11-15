@@ -2,23 +2,18 @@ import ConversationModel, {
     IConversation,
 } from "../database/Mongo/Models/ConversationModel";
 import MessageModel, { IMessage } from "../database/Mongo/Models/MessageModel";
-import { MongooseID } from "../types";
 import {IUser} from "../database/Mongo/Models/UserModel";
-import mongoose from "mongoose";
 import userRepository from "./userRepository";
 class ConversationRepository {
-    public getConversationById(conversationId: MongooseID): Promise<IConversation | null> {
+    public getConversationById(conversationId: string): Promise<IConversation | null> {
         return ConversationModel.findById(conversationId).exec();
     }
 
-    public getAllConversationsForUser(user: IUser | null) {
-        if (!user) {
-            return [];
-        }
-        return ConversationModel.find({ participants: user.id }).exec();
+    public getAllConversationsForUser(userId: string) {
+        return ConversationModel.find({ participants: userId }).exec();
     }
 
-    public deleteConversationById(conversationId: MongooseID) {
+    public deleteConversationById(conversationId: string) {
         return ConversationModel.findOneAndDelete({ _id: conversationId });
     }
 
@@ -33,33 +28,48 @@ class ConversationRepository {
         return ConversationModel.create(conversation);
     }
 
-    public addMessageToConversation(
-        conversationId: MongooseID,
-        content: string,
-        messageReplyId: MongooseID | null
-    ) {
-        const message: IMessage = new MessageModel({
-            conversationId: conversationId,
-            from: null, // TODO: put curent user
-            content: content,
-            postedAt: new Date(),
-            replyTo: messageReplyId,
-            edited: false,
-            deleted: false,
-        });
-        return MessageModel.create(message).then((createdMessage) => {
-            return this.getConversationById(conversationId).then((conversation) => {
-                if (conversation) {
-                    conversation.messages.push(createdMessage.id);
-                    conversation.save();
-                }
+    public async addMessageToConversation(conversationId: string, content: string, userId: string, messageReplyId: string | null) {
+        try {
+            const message: IMessage = new MessageModel({
+                conversationId: conversationId,
+                from: userId,
+                content: content,
+                postedAt: new Date(),
+                replyTo: messageReplyId,
+                edited: false,
+                deleted: false,
             });
-        });
-    }
 
+            const createdMessage: IMessage = await MessageModel.create(message);
+
+            const conversation: IConversation | null = await this.getConversationById(conversationId);
+            if (!conversation) {
+                console.error('Conversation not found');
+                return null;
+            }
+
+            conversation.messages.push(createdMessage.id);
+            conversation.lastUpdate = new Date();
+
+            const updatedConversation = await conversation.save();
+
+            const populatedConversation = await ConversationModel
+                .findById(updatedConversation._id)
+                .populate({
+                    path: 'users',
+                    model: 'messageModel',
+                })
+                .exec();
+
+            return populatedConversation;
+        } catch (error) {
+            console.error('Error adding message to conversation:', error);
+            throw error;
+        }
+    }
     public setConversationSeenForUserAndMessage(
-        conversationId: MongooseID,
-        messageId: MongooseID
+        conversationId: string,
+        messageId: string
     ) {
         this.getConversationById(conversationId).then((conversation) => {
             if (conversation) {

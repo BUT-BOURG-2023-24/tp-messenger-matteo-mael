@@ -1,9 +1,13 @@
-import {Request, Response} from "express";
+import e, {Request, Response} from "express";
 import bcrypt from "bcrypt";
 import userModel, {IUser} from "../database/Mongo/Models/UserModel";
 import {pickRandom} from "../pictures";
 import {SocketController} from "../socket/socketController";
 import userRepository from "../repository/userRepository";
+import {UserResponse} from "../response/userResponse";
+import {CodeEnum, ErrorEnum} from "../response/errorEnum";
+import {ApiResponse} from "../response/apiResponse";
+import {ErrorResponse} from "../response/errorResponse";
 
 const jwt = require('jsonwebtoken');
 
@@ -11,13 +15,13 @@ const EXPIRES_TIME_TOKEN: string = '1h';
 
 class UserController {
 
-    public async getOnlineUsers(req: Request, res: Response): Promise<Response> {
+    public async getOnlineUsers(): Promise<ApiResponse> {
         try {
             const userIds: string[] = Array.from(SocketController.userSocketMap.values());
             const users: IUser[] | null = await userRepository.getUsersbyIds(userIds);
-            return res.status(200).json({users});
+            return new ApiResponse(undefined,users);
         } catch (error) {
-            return res.status(500).json({message: 'Server error'});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -47,40 +51,30 @@ class UserController {
         }
     }
 
-    public async getUsersByIds(req: Request, res: Response): Promise<Response> {
-        try {
-            const users: IUser[] | null = await userRepository.getUsersbyIds(req.body.ids);
-            if (!users || users.length === 0) {
-                return res.status(404).json({message: 'User not found'});
-            }
-            return res.status(200).json(users);
-        } catch (error) {
-            return res.status(500).json({message: 'Server error'});
-        }
+    public async getUsersByIds(usersId:string[]): Promise<IUser[] | null> {
+            return await userRepository.getUsersbyIds(usersId);
     }
 
-    public async login(req: Request, res: Response): Promise<Response> {
-        const {username} = req.body;
+    public async login(username: string, password: string): Promise<ApiResponse> {
         const isNewUser: boolean = await UserController.checkIfUserExist(username);
         if (!isNewUser) {
-            return await UserController.signin(req, res);
+            return await UserController.signin(username, password);
         } else {
-            return await UserController.createUser(req, res);
+            return await UserController.createUser(username, password);
         }
     }
 
-    public async getAllUsers(req: Request, res: Response): Promise<Response> {
+    public async getAllUsers(): Promise<ApiResponse> {
         try {
             const users: IUser[] | null = await userRepository.getAllUsers();
-            return res.status(200).json({users});
+            return new ApiResponse(undefined,users);
         } catch (error) {
-            return res.status(500).json({message: 'Server error'});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 
-    public static async createUser(req: Request, res: Response): Promise<Response> {
+    public static async createUser(username: string, password: string): Promise<ApiResponse> {
         try {
-            const {password, username} = req.body;
             let hashPassword: string = await bcrypt.hash(password, 5);
             const userFromRequest: IUser = new userModel({
                 username: username,
@@ -89,39 +83,27 @@ class UserController {
             });
             const user: IUser | null = await userRepository.createUser(userFromRequest);
             if (!user) {
-                return res.status(404).json({message: 'User not found'});
+                return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR))
             }
             const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
-            return res.status(201).json({
-                user,
-                "token": token,
-                "isNewUser": "true"
-            });
+            return new ApiResponse(undefined,new UserResponse(user, token, true));
         } catch (error) {
-            return res.status(500).json({message: 'Server error'});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR))
         }
     }
 
-    public static async signin(req: Request, res: Response): Promise<Response> {
-        try {
-            const {password, username} = req.body;
-            const user: IUser | null = await userRepository.getUserByName(username);
-            if (!user) {
-                return res.status(400).json({message: 'login or password incorrect'});
-            }
-            const passwordMatch: boolean = await bcrypt.compare(password, user.password);
-            if (!passwordMatch) {
-                return res.status(400).json({message: 'login or password incorrect'});
-            }
-            const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
-            return res.status(200).json({
-                user,
-                token,
-                "isNewUser": "false"
-            });
-        } catch (error) {
-            return res.status(500).json({message: 'Server error'});
+    public static async signin(username: string, password: string): Promise<ApiResponse> {
+        const user: IUser | null = await userRepository.getUserByName(username);
+        if (!user) {
+            return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST,ErrorEnum.LOGIN_PASSWORD_NOT_MATCH));
         }
+        const passwordMatch: boolean = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST,ErrorEnum.LOGIN_PASSWORD_NOT_MATCH));
+        }
+        const token = jwt.sign({userId: user?._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
+        return new ApiResponse(undefined,new UserResponse(user, token, false));
+
     }
 
     public static async checkIfUserExist(username: string): Promise<boolean> {

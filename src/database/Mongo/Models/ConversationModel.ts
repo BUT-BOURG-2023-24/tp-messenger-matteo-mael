@@ -1,17 +1,19 @@
 import mongoose, { Document, Schema } from "mongoose";
 import { MongooseID } from "../../../types";
+import {IMessage} from "./MessageModel";
+import {IUser} from "./UserModel";
 
 export interface IConversation extends Document {
-  participants: MongooseID[];
+  participants: IUser[];
   messages: MongooseID[];
   title: String;
   lastUpdate: Date;
   seen: Map<MongooseID, MongooseID>;
 }
 
-const conversationSchema: Schema<IConversation> = new Schema<IConversation>({
-  participants: [{ type: Schema.ObjectId, ref: "UserModel" }],
-  messages: [{ type: Schema.ObjectId, ref: "MessageModel" }],
+const ConversationSchema: Schema<IConversation> = new Schema<IConversation>({
+  participants: [{ type: Schema.Types.ObjectId, ref: "user" }],
+  messages: [{ type: Schema.Types.ObjectId, ref: "MessageModel" }],
   title: { type: String, required: true },
   lastUpdate: { type: Date, required: true },
   seen: {
@@ -20,9 +22,6 @@ const conversationSchema: Schema<IConversation> = new Schema<IConversation>({
   },
 });
 
-const ConversationModel = mongoose.model<IConversation>(
-    "Conversation",
-    conversationSchema
-);
+const ConversationModel = mongoose.model<IConversation>("conversation", ConversationSchema);
 
 export default ConversationModel;

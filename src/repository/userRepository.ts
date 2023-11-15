@@ -14,7 +14,7 @@ class UserRepository {
         return UserModel.findOne({ username });
     }
 
-    public getUsersbyIds(listeIds: MongooseID[]): Promise<IUser[] | null> {
+    public getUsersbyIds(listeIds: string[]): Promise<IUser[] | null> {
         return UserModel.find({ _id: { $in: listeIds } });
     }
     public getAllUsers(): Promise<IUser[] | null> {

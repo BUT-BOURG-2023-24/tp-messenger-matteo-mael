@@ -2,6 +2,10 @@ import {Request, Response} from "express";
 import ConversationRepository from "../repository/conversationRepository";
 import {IUser} from "../database/Mongo/Models/UserModel";
 import userRepository from "../repository/userRepository";
+import {ApiResponse} from "../response/apiResponse";
+import {ErrorResponse} from "../response/errorResponse";
+import {CodeEnum, ErrorEnum} from "../response/errorEnum";
+import userController from "./userController";
 
 const conversationRepository = new ConversationRepository();
 
@@ -15,66 +19,71 @@ class ConversationController {
         }
     }
 
-    public async getAllConversationsForUser(req: Request, res: Response): Promise<Response> {
+    public async getAllConversationsForUser(userId: string): Promise<ApiResponse> {
         try {
-            if (!res.locals.userId) {
-                return res.status(401).json({error: "Bad request"});
+            if (!userId) {
+                return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.AUTHENTICATION_NEEDED));
             }
-            const user: IUser|null = await userRepository.getUserById(res.locals.userId.toString());
-            const conversations = await conversationRepository.getAllConversationsForUser(user);
-            return res.status(200).json({conversations});
+            const user: IUser | null = await userRepository.getUserById(userId);
+            const conversations = await conversationRepository.getAllConversationsForUser(user?.id);
+            if(conversations !== undefined) {
+                for (let conversation of conversations) {
+                    // Utilisation de 'as' pour informer TypeScript que participants est une liste de chaînes
+                    conversation.participants = await userController.getUsersByIds(conversation.participants as any[]) as any;
+                }
+            }
+            return new ApiResponse(undefined, {conversations});
         } catch (err) {
-            return res.status(500).json({error: "Server Error"});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
-
-    public async getConversationById(req: Request, res: Response): Promise<Response> {
+    public async getConversationById(conversationId: string): Promise<ApiResponse> {
         try {
             const conversation = await conversationRepository.getConversationById(
-                req.params.id
+                conversationId
             );
             if (!conversation) {
-                return res.status(404).json({message: "User not found"});
+                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.CONVERSATION_NOT_FOUND));
             }
-            return res.status(200).json(conversation);
+            return new ApiResponse(undefined, conversation);
         } catch (err) {
-            return res.status(500).json({error: "Server Error"});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 
-    public async createConversation(req: Request, res: Response): Promise<Response> {
+    public async createConversation(concernedUsersIds: string[], userId?: string): Promise<ApiResponse> {
         try {
-            let concernedUsersIds: string[] = req.body.concernedUsersIds;
             if (!concernedUsersIds) {
-                return res.status(400).json({error: "Bad request"});
+                return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.USERS_NOT_FOUND));
             }
-            if(!res.locals.userId) {
-                return res.status(401).json({error: "Bad request"});
+            if (!userId) {
+                return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.AUTHENTICATION_NEEDED));
             }
-            concernedUsersIds.push(res.locals.userId.toString());
+            concernedUsersIds.push(userId);
             const newConversation = await conversationRepository.createConversation(
                 concernedUsersIds
             );
-            return res.status(200).json({conversation: newConversation});
+            return new ApiResponse(undefined, newConversation);
         } catch (err) {
-            return res.status(500).json({error: "Server Error"});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 
-    public async addMessageToConversation(req: Request, res: Response): Promise<Response> {
+    public async addMessageToConversation(messageContent: string, conversationId: string, userId: string, messageReplyId?: string): Promise<ApiResponse> {
         try {
-            if (!req.body.content) {
-                return res.status(401).json({error: "Bad Request"});
+            if (!messageContent) {
+                return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.MESSAGE_CONTENT_NOT_FOUND));
             }
-            const conversationId = req.params.id;
             const result = await conversationRepository.addMessageToConversation(
                 conversationId,
-                req.body.content,
-                req.body.messageReplyId ?? null
+                messageContent,
+                userId,
+
+                messageReplyId ?? null,
             );
-            return res.status(200).json(result);
+            return new ApiResponse(undefined, result);
         } catch (err) {
-            return res.status(500).json({error: "Server Error"});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 

@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 import config from "../config";
+import UserModel from "./Mongo/Models/UserModel";
+import ConversationModel from "./Mongo/Models/ConversationModel";
+import MessageModel from "./Mongo/Models/MessageModel";
 
 class Database {
   fromTest: boolean;
@@ -11,7 +14,7 @@ class Database {
   async connect() {
     mongoose
       .connect(this.fromTest ? config.DB_ADDRESS_TEST : config.DB_ADDRESS)
-      .then(() => {
+       .then(() => {
         console.log("DB Connected");
       })
       .catch((error) => {

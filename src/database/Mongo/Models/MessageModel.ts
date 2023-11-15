@@ -28,6 +28,6 @@ const MessageSchema: Schema<IMessage> = new Schema<IMessage>({
   reactions: { type: Map, of: String },
 });
 
-const MessageModel = mongoose.model<IMessage>("Message", MessageSchema);
+const MessageModel = mongoose.model<IMessage>("message", MessageSchema);
 
 export default MessageModel;
