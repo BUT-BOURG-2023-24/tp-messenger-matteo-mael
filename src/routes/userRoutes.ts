@@ -5,13 +5,14 @@ import userController from "../controller/userController";
 import {checkAuth} from "../middleware/auth";
 import {ApiResponse} from "../response/apiResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
+import JoiValidator from "../middleware/joiValidator";
 
 
 //exemple de route pour tester le token
 // router.get('/:id',checkAuth, userController.getUserById);
 
 
-router.post('/login', async (req:Request, res: Response) => {
+router.post('/login',JoiValidator, async (req:Request, res: Response) => {
     try {
         const response: ApiResponse = await userController.login(req.body.username, req.body.password);
         if (response.error) {
@@ -19,7 +20,6 @@ router.post('/login', async (req:Request, res: Response) => {
         }
         return res.status(CodeEnum.OK).json(response.data);
     } catch (error) {
-        console.error(error);
         return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);    }
 });
 router.get('/all', async(req:Request, res: Response) => {

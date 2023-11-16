@@ -5,7 +5,10 @@ import MessageModel, {IMessage} from "../database/Mongo/Models/MessageModel";
 import {IUser} from "../database/Mongo/Models/UserModel";
 import userRepository from "./userRepository";
 import messageController from "../controller/messageController";
+import mongoose from "mongoose";
+import MesssageRepository from "./messsageRepository";
 
+const messsageRepository = new MesssageRepository();
 class ConversationRepository {
     public getConversationById(conversationId: string): Promise<IConversation | null> {
         return ConversationModel.findById(conversationId)
@@ -32,11 +35,12 @@ class ConversationRepository {
             lastUpdate: new Date(),
             seen: new Map<string, string>()
         });
-        return ConversationModel.create(conversation);
+        const newConversation = await ConversationModel.create(conversation)
+        return this.getConversationById(newConversation.id);
     }
 
     public async addMessageToConversation(conversationId: string, content: string, userId: string, messageReplyId: string | null) {
-            const createdMessage: IMessage = await messageController.createMessage(conversationId,userId,content,messageReplyId)
+            const createdMessage: IMessage = await messsageRepository.createMessage(conversationId,userId,content,messageReplyId)
             const conversation: IConversation | null = await this.getConversationById(conversationId);
             if (!conversation) {
                 return null;
@@ -48,10 +52,11 @@ class ConversationRepository {
     }
 
     public setConversationSeenForUserAndMessage(conversationId: string, messageId: string,userId: string) {
-        this.getConversationById(conversationId).then((conversation) => {
+        return this.getConversationById(conversationId).then((conversation) => {
             if (conversation) {
                 conversation.seen.set(userId, messageId);
                 conversation.save();
+                return conversation;
             }
         });
     }

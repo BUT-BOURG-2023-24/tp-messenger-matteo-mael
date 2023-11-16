@@ -86,24 +86,26 @@ class ConversationController {
             if (!messageId) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.MESSAGE_ID_NOT_FOUND))
             }
-            conversationRepository.setConversationSeenForUserAndMessage(conversationid, messageId,userId)
-            const conversation = await conversationRepository.getConversationById(conversationid)
-            return new ApiResponse(undefined, {conversation});
+           const modifyConversation = await conversationRepository.setConversationSeenForUserAndMessage(conversationid, messageId,userId)
+            if (!modifyConversation) {
+                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.CONVERSATION_NOT_FOUND));
+            }
+            return new ApiResponse(undefined, {modifyConversation});
         } catch (err) {
             return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 
-    public async deleteConversation(req: Request, res: Response): Promise<Response> {
+    public async deleteConversation(id: string): Promise<ApiResponse> {
         try {
             const deletedConversation =
-                await conversationRepository.deleteConversationById(req.params.id);
+                await conversationRepository.deleteConversationById(id);
             if (!deletedConversation) {
-                return res.status(404).json({error: "Conversation not found"});
+                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.CONVERSATION_NOT_FOUND));
             }
-            return res.status(200).json({conversation: deletedConversation});
+            return new ApiResponse(undefined, deletedConversation);
         } catch (err) {
-            return res.status(500).json({error: "Server Error"});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 }

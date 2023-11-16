@@ -20,8 +20,10 @@ function makeApp(database: Database) {
     app.use(cors());
     const conversationRoutes = require("./routes/conversationRoutes");
     const userRoutes = require("./routes/userRoutes");
+    const messageRoutes = require("./routes/messageRoutes");
     app.use("/conversations", conversationRoutes);
     app.use('/users', userRoutes);
+    app.use('/messages', messageRoutes);
     const io = new Server(server, {cors: {origin: "*"}});
     let socketController = new SocketController(io, database);
 

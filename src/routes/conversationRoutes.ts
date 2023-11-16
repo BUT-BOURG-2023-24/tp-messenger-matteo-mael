@@ -6,6 +6,8 @@ import conversationController from "../controller/conversationController";
 import {ApiResponse} from "../response/apiResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import {Error} from "mongoose";
+import {JoiRequestValidatorInstance} from "../JoiRequestValidator";
+import JoiValidator from "../middleware/joiValidator";
 
 router.get("/", checkAuth, async (req: Request, res: Response) => {
     try {
@@ -21,7 +23,7 @@ router.get("/", checkAuth, async (req: Request, res: Response) => {
         res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
     }
 });
-router.post("/", checkAuth, async (req: Request, res: Response) => {
+router.post("/",JoiValidator ,checkAuth, async (req: Request, res: Response) => {
     try {
         if (res.locals.userId === undefined || res.locals.userId === null) {
             return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.USER_NOT_FOUND});
@@ -39,6 +41,9 @@ router.post("/:id", checkAuth, async (req: Request, res: Response) => {
     try {
         if (res.locals.userId === undefined || res.locals.userId === null) {
             return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.USER_NOT_FOUND});
+        }
+        if(req.params.id === undefined || req.params.id === null){
+            return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.CONVERSATION_NOT_FOUND});
         }
         const response: ApiResponse = await conversationController.addMessageToConversation(req.body.messageContent, req.params.id.toString(), res.locals.userId.toString(), req.body.messageReplyId)
         if (response.error) {
@@ -63,6 +68,21 @@ router.post("/see/:id",checkAuth, async (req: Request, res: Response) => {
         return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
     }
 });
-router.delete("/:id", conversationController.deleteConversation);
-
+router.delete("/:id", checkAuth,async (req: Request, res: Response) => {
+        try {
+            if (req.params.id === undefined || req.params.id === null) {
+                return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.CONVERSATION_NOT_FOUND});
+            }
+            const response: ApiResponse = await conversationController.deleteConversation(req.params.id.toString());
+            if (response.error) {
+                res.status(response.error.code).json(response.error.message);
+            }
+            if(response.data === null){
+                return res.status(CodeEnum.NOT_FOUND).json({ErrorEnum: ErrorEnum.CONVERSATION_NOT_FOUND});
+            }
+            res.status(200).json(response.data);
+        } catch (error) {
+            return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
+        }
+});
 module.exports = router;

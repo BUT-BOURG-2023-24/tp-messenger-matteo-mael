@@ -8,8 +8,10 @@ import {UserResponse} from "../response/userResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import {ApiResponse} from "../response/apiResponse";
 import {ErrorResponse} from "../response/errorResponse";
+import express from "express";
 
 const jwt = require('jsonwebtoken');
+const app = express();
 
 const EXPIRES_TIME_TOKEN: string = '1h';
 
@@ -25,29 +27,29 @@ class UserController {
         }
     }
 
-    public async getUserById(req: Request, res: Response): Promise<Response> {
+    public async getUserById(req: Request, res: Response): Promise<ApiResponse> {
         try {
             const userId: string = req.params.id;
             const user: IUser | null = await userRepository.getUserById(userId);
             if (!user) {
-                return res.status(404).json({message: 'User not found'});
+              return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND,ErrorEnum.USER_NOT_FOUND));
             }
-            return res.status(200).json(user);
+          return new ApiResponse(undefined,user);
         } catch (error) {
-            return res.status(500).json({message: 'Server error'});
+           return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 
-    public async getUserByName(req: Request, res: Response): Promise<Response> {
+    public async getUserByName(req: Request, res: Response): Promise<ApiResponse> {
         try {
             const name: string = req.params.name;
             const user: IUser | null = await userRepository.getUserByName(name);
             if (!user) {
-                return res.status(404).json({message: 'User not found'});
+                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND,ErrorEnum.USER_NOT_FOUND));
             }
-            return res.status(200).json(user);
+            return new ApiResponse(undefined,user);
         } catch (error) {
-            return res.status(500).json({message: 'Server error'});
+            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR));
         }
     }
 
