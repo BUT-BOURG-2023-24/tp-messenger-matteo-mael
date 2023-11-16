@@ -1,4 +1,4 @@
-import e, {Request, Response} from "express";
+import {Request, Response} from "express";
 import bcrypt from "bcrypt";
 import userModel, {IUser} from "../database/Mongo/Models/UserModel";
 import {pickRandom} from "../pictures";
@@ -8,15 +8,11 @@ import {UserResponse} from "../response/userResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import {ApiResponse} from "../response/apiResponse";
 import {ErrorResponse} from "../response/errorResponse";
-import express from "express";
 
 const jwt = require('jsonwebtoken');
-const app = express();
-
-const EXPIRES_TIME_TOKEN: string = '1h';
 
 class UserController {
-
+    private static readonly EXPIRES_TIME_TOKEN: string ='1h';
     public async getOnlineUsers(): Promise<ApiResponse> {
         try {
             const userIds: string[] = Array.from(SocketController.userSocketMap.values());
@@ -87,7 +83,7 @@ class UserController {
             if (!user) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR))
             }
-            const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
+            const token = jwt.sign({userId: user._id}, process.env.SECRET_KEY, {expiresIn: this.EXPIRES_TIME_TOKEN});
             return new ApiResponse(undefined,new UserResponse(user, token, true));
         } catch (error) {
             return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR,ErrorEnum.INTERNAL_SERVER_ERROR))
@@ -103,7 +99,7 @@ class UserController {
         if (!passwordMatch) {
             return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST,ErrorEnum.LOGIN_PASSWORD_NOT_MATCH));
         }
-        const token = jwt.sign({userId: user?._id}, process.env.SECRET_KEY, {expiresIn: EXPIRES_TIME_TOKEN});
+        const token = jwt.sign({userId: user?._id}, process.env.SECRET_KEY, {expiresIn: this.EXPIRES_TIME_TOKEN});
         return new ApiResponse(undefined,new UserResponse(user, token, false));
 
     }

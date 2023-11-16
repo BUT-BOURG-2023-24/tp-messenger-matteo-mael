@@ -3,10 +3,6 @@ import express from "express";
 import {Server} from "socket.io";
 import {Database} from "./database/database";
 import {SocketController} from "./socket/socketController";
-import mongoose from "mongoose";
-import UserModel from "./database/Mongo/Models/UserModel";
-import ConversationModel from "./database/Mongo/Models/ConversationModel";
-import MessageModel from "./database/Mongo/Models/MessageModel";
 
 const app = express();
 const cors = require('cors');

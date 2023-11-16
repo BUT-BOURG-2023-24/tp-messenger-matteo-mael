@@ -1,23 +1,14 @@
-import {Request, Response} from "express";
-import ConversationRepository from "../repository/conversationRepository";
 import {IUser} from "../database/Mongo/Models/UserModel";
 import userRepository from "../repository/userRepository";
 import {ApiResponse} from "../response/apiResponse";
 import {ErrorResponse} from "../response/errorResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
-import userController from "./userController";
-
-const conversationRepository = new ConversationRepository();
+import {IConversation} from "../database/Mongo/Models/ConversationModel";
+import ConversationRepository from "../repository/conversationRepository";
 
 class ConversationController {
 
-    public async getConversationWithParticipants(req: Request, res: Response): Promise<Response> {
-        try {
-            return res.status(200).json();
-        } catch (error) {
-            return res.status(500).json({message: "Server Error"});
-        }
-    }
+    public conversationRepository = new ConversationRepository();
 
     public async getAllConversationsForUser(userId: string): Promise<ApiResponse> {
         try {
@@ -25,7 +16,7 @@ class ConversationController {
                 return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.AUTHENTICATION_NEEDED));
             }
             const user: IUser | null = await userRepository.getUserById(userId);
-            const conversations = await conversationRepository.getAllConversationsForUser(user?.id);
+            const conversations :IConversation[]|null = await this.conversationRepository.getAllConversationsForUser(user?.id);
             return new ApiResponse(undefined, {conversations});
         } catch (err) {
             return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
@@ -33,7 +24,7 @@ class ConversationController {
     }
     public async getConversationById(conversationId: string): Promise<ApiResponse> {
         try {
-            const conversation = await conversationRepository.getConversationById(
+            const conversation = await this.conversationRepository.getConversationById(
                 conversationId
             );
             if (!conversation) {
@@ -54,7 +45,7 @@ class ConversationController {
                 return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.AUTHENTICATION_NEEDED));
             }
             concernedUsersIds.push(userId);
-            const newConversation = await conversationRepository.createConversation(
+            const newConversation : IConversation | null  = await this.conversationRepository.createConversation(
                 concernedUsersIds
             );
             return new ApiResponse(undefined, newConversation);
@@ -68,7 +59,7 @@ class ConversationController {
             if (!messageContent) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.MESSAGE_CONTENT_NOT_FOUND));
             }
-            const result = await conversationRepository.addMessageToConversation(
+            const result : IConversation | null   = await this.conversationRepository.addMessageToConversation(
                 conversationId,
                 messageContent,
                 userId,
@@ -86,7 +77,7 @@ class ConversationController {
             if (!messageId) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.MESSAGE_ID_NOT_FOUND))
             }
-           const modifyConversation = await conversationRepository.setConversationSeenForUserAndMessage(conversationid, messageId,userId)
+           const modifyConversation: IConversation | null = await this.conversationRepository.setConversationSeenForUserAndMessage(conversationid, messageId,userId)
             if (!modifyConversation) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.CONVERSATION_NOT_FOUND));
             }
@@ -98,8 +89,8 @@ class ConversationController {
 
     public async deleteConversation(id: string): Promise<ApiResponse> {
         try {
-            const deletedConversation =
-                await conversationRepository.deleteConversationById(id);
+            const deletedConversation : IConversation | null =
+                await this.conversationRepository.deleteConversationById(id);
             if (!deletedConversation) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.CONVERSATION_NOT_FOUND));
             }

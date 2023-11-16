@@ -1,9 +1,8 @@
 import UserModel, {IUser} from "../database/Mongo/Models/UserModel";
-import {MongooseID} from "../types";
 class UserRepository {
 
     public getUserById(userId: string): Promise<IUser | null> {
-        return UserModel.findById(userId).exec();
+        return UserModel.findById(userId);
     }
     public createUser(newUser: IUser): Promise<IUser | null> {
         return UserModel.create(newUser);

@@ -5,8 +5,6 @@ import {checkAuth} from "../middleware/auth";
 import conversationController from "../controller/conversationController";
 import {ApiResponse} from "../response/apiResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
-import {Error} from "mongoose";
-import {JoiRequestValidatorInstance} from "../JoiRequestValidator";
 import JoiValidator from "../middleware/joiValidator";
 
 router.get("/", checkAuth, async (req: Request, res: Response) => {

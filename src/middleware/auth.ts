@@ -1,4 +1,3 @@
-import {JsonWebTokenError} from "jsonwebtoken";
 
 const jwt = require('jsonwebtoken');
 

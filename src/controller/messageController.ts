@@ -2,15 +2,15 @@ import {ApiResponse} from "../response/apiResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import {ErrorResponse} from "../response/errorResponse";
 import MesssageRepository from "../repository/messsageRepository";
-import Reaction from "../enum/Reaction";
+import {IMessage} from "../database/Mongo/Models/MessageModel";
 
-const messageRepository = new MesssageRepository();
+
 
 class MessageController {
-
+    public messageRepository = new MesssageRepository();
     public async createMessage(conversationId: string, userId: string, content: string, messageReplyId: string | null) :Promise<ApiResponse> {
         try {
-            const newConversation = await messageRepository.createMessage(conversationId, userId, content, messageReplyId);
+            const newConversation :IMessage|null = await this.messageRepository.createMessage(conversationId, userId, content, messageReplyId);
             return new ApiResponse(undefined, newConversation);
         } catch (e) {
             return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
@@ -19,7 +19,7 @@ class MessageController {
 
     public async getMessageById(messageId: string):Promise<ApiResponse> {
         try {
-            const newConversation = await messageRepository.getMessageById(messageId);
+            const newConversation :IMessage|null = await this.messageRepository.getMessageById(messageId);
             return new ApiResponse(undefined, newConversation);
         } catch (e) {
             return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
@@ -28,7 +28,7 @@ class MessageController {
 
     public async deleteMessage(id: string): Promise<ApiResponse> {
         try {
-            const deletedMessage = await messageRepository.deleteMessageById(id);
+            const deletedMessage : IMessage| null = await this.messageRepository.deleteMessageById(id);
             if (!deletedMessage) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.MESSAGE_ID_NOT_FOUND));
             }
@@ -40,7 +40,7 @@ class MessageController {
 
     public async editMessage(id: string, content: string): Promise<ApiResponse> {
         try {
-            const editMessage = await messageRepository.editMessageById(id, content);
+            const editMessage : IMessage| null = await this.messageRepository.editMessageById(id, content);
             if (!editMessage) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.MESSAGE_ID_NOT_FOUND));
             }
@@ -52,7 +52,7 @@ class MessageController {
 
     public async reactToMessage(id: string, reaction: string,userId: string): Promise<ApiResponse> {
         try {
-            const editMessage = await messageRepository.reactToMEssage(id, reaction, userId);
+            const editMessage : IMessage| null = await this.messageRepository.reactToMEssage(id, reaction, userId);
             if (!editMessage) {
                 return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.MESSAGE_ID_NOT_FOUND));
             }

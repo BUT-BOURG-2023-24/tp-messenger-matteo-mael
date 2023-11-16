@@ -2,15 +2,9 @@ import express, {Request, Response} from "express";
 
 const router = express.Router();
 import userController from "../controller/userController";
-import {checkAuth} from "../middleware/auth";
 import {ApiResponse} from "../response/apiResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import JoiValidator from "../middleware/joiValidator";
-
-
-//exemple de route pour tester le token
-// router.get('/:id',checkAuth, userController.getUserById);
-
 
 router.post('/login',JoiValidator, async (req:Request, res: Response) => {
     try {
