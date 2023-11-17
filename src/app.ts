@@ -3,6 +3,7 @@ import express from "express";
 import {Server} from "socket.io";
 import {Database} from "./database/database";
 import {SocketController} from "./socket/socketController";
+import {ErrorHandler} from "./Error/errorHandler";
 
 const app = express();
 const cors = require('cors');
@@ -22,7 +23,7 @@ function makeApp(database: Database) {
     app.use('/messages', messageRoutes);
     const io = new Server(server, {cors: {origin: "*"}});
     let socketController = new SocketController(io, database);
-
+    app.use(ErrorHandler);
     app.locals.socketController = socketController;
 
     return {app, server};

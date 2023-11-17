@@ -13,10 +13,10 @@ class UserRepository {
         return UserModel.findOne({ username });
     }
 
-    public getUsersbyIds(listeIds: string[]): Promise<IUser[] | null> {
+    public getUsersbyIds(listeIds: string[]): Promise<IUser[]> {
         return UserModel.find({ _id: { $in: listeIds } });
     }
-    public getAllUsers(): Promise<IUser[] | null> {
+    public getAllUsers(): Promise<IUser[]> {
         return UserModel.find();
     }
 }

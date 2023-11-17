@@ -1,43 +1,37 @@
-import express, {Request, Response} from "express";
+import express, {NextFunction, Request, Response} from "express";
 
 const router = express.Router();
 import userController from "../controller/userController";
-import {ApiResponse} from "../response/apiResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import JoiValidator from "../middleware/joiValidator";
+import {IUser} from "../database/Mongo/Models/UserModel";
+import {UserResponse} from "../response/userResponse";
 
-router.post('/login',JoiValidator, async (req:Request, res: Response) => {
+router.post('/login', JoiValidator, async (req: Request, res: Response, next: NextFunction) :Promise<Response|undefined> => {
     try {
-        const response: ApiResponse = await userController.login(req.body.username, req.body.password);
-        if (response.error) {
-            return res.status(response.error.code).json(response.error.message);
-        }
-        return res.status(CodeEnum.OK).json(response.data);
+       const userResponse: UserResponse = await userController.loginOrRegister(req.body.username, req.body.password);
+       return res.status(CodeEnum.OK).json(userResponse);
     } catch (error) {
-        return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);    }
+        next(error);
+    }
 });
-router.get('/all', async(req:Request, res: Response) => {
-        try {
-            const response : ApiResponse = await userController.getAllUsers();
-            if (response.error) {
-                return res.status(response.error.code).json(response.error.message);
-            }
-            return res.status(CodeEnum.OK).json({"users": response.data});
-        } catch (error) {
-            return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);        }
+router.get('/all', async (req: Request, res: Response, next: NextFunction):Promise<Response|undefined> => {
+    try {
+        const onlineUsers :IUser[] = await userController.getAllUsers();
+        return res.status(CodeEnum.OK).json({"users": onlineUsers});
+    } catch (error) {
+        next(error);
     }
-);
-router.get('/online', async (req:Request, res: Response) => {
-        try {
-            const response :ApiResponse = await userController.getOnlineUsers();
-            if (response.error) {
-                return res.status(response.error.code).json(response.error.message);
-            }
-            return res.status(CodeEnum.OK).json({"users": response.data});
-        } catch (error) {
-            console.error(error);
-            return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);        }
+});
+
+router.get('/online', async (req: Request, res: Response, next: NextFunction) :Promise<Response|undefined> => {
+    try {
+        const usersId: string[]= Array.from(req.app.locals.socketController.userSocketMap.values())
+        const onlineUsers : IUser[] | null = await userController.getUsersByIds(usersId);
+        return res.status(CodeEnum.OK).json({"users":onlineUsers});
+    } catch (error) {
+        next(error);
     }
-);
+});
 
 module.exports = router;

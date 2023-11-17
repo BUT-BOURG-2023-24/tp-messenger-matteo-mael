@@ -1,4 +1,4 @@
-import express, {Request, Response} from "express";
+import express, {NextFunction, Request, Response} from "express";
 
 const router = express.Router();
 import {checkAuth} from "../middleware/auth";
@@ -6,81 +6,70 @@ import conversationController from "../controller/conversationController";
 import {ApiResponse} from "../response/apiResponse";
 import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import JoiValidator from "../middleware/joiValidator";
+import {ErrorResponse} from "../response/errorResponse";
+import {IConversation} from "../database/Mongo/Models/ConversationModel";
+import {IMessage} from "../database/Mongo/Models/MessageModel";
+import {Error400} from "../Error/error";
 
-router.get("/", checkAuth, async (req: Request, res: Response) => {
+router.get("/", checkAuth, async (req: Request, res: Response,next: NextFunction):Promise<Response|undefined> => {
     try {
         if (res.locals.userId === undefined || res.locals.userId === null) {
-            return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.USER_NOT_FOUND});
+          throw new Error400(ErrorEnum.USER_NOT_FOUND);
         }
-        const response: ApiResponse = await conversationController.getAllConversationsForUser(res.locals.userId.toString());
-        if (response.error) {
-            res.status(response.error.code).json(response.error.message);
-        }
-        res.status(CodeEnum.OK).json(response.data);
+        const conversations: IConversation[] = await conversationController.getAllConversationsForUser(res.locals.userId.toString());
+        return res.status(CodeEnum.OK).json({"conversations": conversations});
     } catch (error) {
-        res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
+        next
+        console.error()
     }
 });
-router.post("/",JoiValidator ,checkAuth, async (req: Request, res: Response) => {
+router.post("/",JoiValidator ,checkAuth, async (req: Request, res: Response): Promise<ApiResponse> => {
     try {
         if (res.locals.userId === undefined || res.locals.userId === null) {
-            return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.USER_NOT_FOUND});
+            return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.USER_NOT_FOUND));
         }
         const response: ApiResponse = await conversationController.createConversation(req.body.concernedUsersIds, res.locals.userId.toString());
         if (response.error) {
-            return res.status(response.error.code).json(response.error.message);
+            return new ApiResponse(new ErrorResponse(response.error.code, response.error.message));
         }
-        return res.status(200).json(response.data);
+        return new ApiResponse(undefined, response.data);
     } catch (error) {
-        return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
+        return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
     }
 });
-router.post("/:id", checkAuth, async (req: Request, res: Response) => {
+router.post("/:id", checkAuth, async (req: Request, res: Response, next: NextFunction):Promise<IMessage | undefined> => {
     try {
         if (res.locals.userId === undefined || res.locals.userId === null) {
-            return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.USER_NOT_FOUND});
+            throw new Error400(ErrorEnum.USER_NOT_FOUND);
         }
         if(req.params.id === undefined || req.params.id === null){
-            return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.CONVERSATION_NOT_FOUND});
+            throw new Error400(ErrorEnum.CONVERSATION_NOT_FOUND);
         }
-        const response: ApiResponse = await conversationController.addMessageToConversation(req.body.messageContent, req.params.id.toString(), res.locals.userId.toString(), req.body.messageReplyId)
-        if (response.error) {
-            res.status(response.error.code).json(response.error.message);
-        }
-        res.status(200).json(response.data);
+        const message: IMessage = await conversationController.addMessageToConversation(req.body.messageContent, req.params.id.toString(), res.locals.userId.toString(), req.body.messageReplyId);
+        req.app.locals.socketController.addMessageEvent(req.params.id.toString(),message)
+        return message;
     } catch (error) {
-        return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
+        next(error);
     }
 });
-router.post("/see/:id",checkAuth, async (req: Request, res: Response) => {
+router.post("/see/:id",checkAuth, async (req: Request, res: Response,next: NextFunction): Promise<IConversation | undefined> => {
     try {
         if (res.locals.userId === undefined || res.locals.userId === null) {
-            return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.USER_NOT_FOUND});
+           throw new Error400(ErrorEnum.USER_NOT_FOUND);
         }
-        const response: ApiResponse = await conversationController.setConversationSeenForUserAndMessage(req.body.messageId ,req.params.id,res.locals.userId.toString());
-        if (response.error) {
-            res.status(response.error.code).json(response.error.message);
-        }
-        res.status(200).json(response.data);
+        return await conversationController.setConversationSeenForUserAndMessage(req.body.messageId ,req.params.id,res.locals.userId.toString());
     } catch (error) {
-        return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
+        next(error)
     }
 });
-router.delete("/:id", checkAuth,async (req: Request, res: Response) => {
+router.delete("/:id", checkAuth,async (req: Request, res: Response, next: NextFunction): Promise<IConversation | undefined> => {
         try {
             if (req.params.id === undefined || req.params.id === null) {
-                return res.status(CodeEnum.BAD_REQUEST).json({ErrorEnum: ErrorEnum.CONVERSATION_NOT_FOUND});
+                throw new Error400(ErrorEnum.USER_NOT_FOUND);
             }
-            const response: ApiResponse = await conversationController.deleteConversation(req.params.id.toString());
-            if (response.error) {
-                res.status(response.error.code).json(response.error.message);
-            }
-            if(response.data === null){
-                return res.status(CodeEnum.NOT_FOUND).json({ErrorEnum: ErrorEnum.CONVERSATION_NOT_FOUND});
-            }
-            res.status(200).json(response.data);
+           return await conversationController.deleteConversation(req.params.id.toString());
         } catch (error) {
-            return res.status(CodeEnum.INTERNAL_SERVER_ERROR).json(ErrorEnum.INTERNAL_SERVER_ERROR);
+            next(error)
         }
 });
 module.exports = router;

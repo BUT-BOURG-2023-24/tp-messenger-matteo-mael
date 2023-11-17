@@ -3,6 +3,8 @@ import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import {ErrorResponse} from "../response/errorResponse";
 import MesssageRepository from "../repository/messsageRepository";
 import {IMessage} from "../database/Mongo/Models/MessageModel";
+import {Error404} from "../Error/error";
+import {IConversation} from "../database/Mongo/Models/ConversationModel";
 
 
 
@@ -26,41 +28,30 @@ class MessageController {
         }
     }
 
-    public async deleteMessage(id: string): Promise<ApiResponse> {
-        try {
+    public async deleteMessage(id: string): Promise<IMessage> {
             const deletedMessage : IMessage| null = await this.messageRepository.deleteMessageById(id);
             if (!deletedMessage) {
-                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.MESSAGE_ID_NOT_FOUND));
+                throw new Error404(ErrorEnum.MESSAGE_NOT_FOUND);
             }
-            return new ApiResponse(undefined, deletedMessage);
-        } catch (err) {
-            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
-        }
+           return deletedMessage;
     }
 
-    public async editMessage(id: string, content: string): Promise<ApiResponse> {
-        try {
+    public async editMessage(id: string, content: string): Promise<IMessage> {
             const editMessage : IMessage| null = await this.messageRepository.editMessageById(id, content);
             if (!editMessage) {
-                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.MESSAGE_ID_NOT_FOUND));
+                throw new Error404(ErrorEnum.MESSAGE_NOT_FOUND);
             }
-            return new ApiResponse(undefined, editMessage);
-        } catch (err) {
-            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
-        }
+           return editMessage;
     }
 
-    public async reactToMessage(id: string, reaction: string,userId: string): Promise<ApiResponse> {
-        try {
+    public async reactToMessage(id: string, reaction: string,userId: string): Promise<IMessage> {
             const editMessage : IMessage| null = await this.messageRepository.reactToMEssage(id, reaction, userId);
             if (!editMessage) {
-                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.MESSAGE_ID_NOT_FOUND));
+               throw new Error404(ErrorEnum.MESSAGE_NOT_FOUND);
             }
-            return new ApiResponse(undefined, editMessage);
-        } catch (err) {
-            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
-        }
+            return editMessage;
     }
+
 }
 
 let messageController: MessageController = new MessageController();

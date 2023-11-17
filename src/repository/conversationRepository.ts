@@ -5,6 +5,8 @@ import {IMessage} from "../database/Mongo/Models/MessageModel";
 import {IUser} from "../database/Mongo/Models/UserModel";
 import userRepository from "./userRepository";
 import MesssageRepository from "./messsageRepository";
+import {ErrorEnum} from "../response/errorEnum";
+import {Error404} from "../Error/error";
 
 
 
@@ -17,7 +19,7 @@ class ConversationRepository {
             .populate({path: 'messages'});
     }
 
-    public getAllConversationsForUser(userId: string) : Promise<IConversation[] | null> {
+    public getAllConversationsForUser(userId: string) : Promise<IConversation[]> {
         return ConversationModel.find({participants: userId})
             .populate({path: 'participants'})
             .populate({path: 'messages'});
@@ -40,16 +42,16 @@ class ConversationRepository {
         return this.getConversationById(newConversation.id);
     }
 
-    public async addMessageToConversation(conversationId: string, content: string, userId: string, messageReplyId: string | null): Promise<IConversation | null> {
-        const createdMessage: IMessage| null = await this.messsageRepository.createMessage(conversationId, userId, content, messageReplyId)
+    public async addMessageToConversation(conversationId: string, content: string, userId: string, messageReplyId: string | null): Promise<IMessage> {
+        const createdMessage: IMessage = await this.messsageRepository.createMessage(conversationId, userId, content, messageReplyId)
         const conversation: IConversation | null = await this.getConversationById(conversationId);
         if (!conversation || !createdMessage) {
-            return null;
+            throw new Error404(ErrorEnum.CONVERSATION_NOT_FOUND);
         }
         conversation.messages.push(createdMessage.id);
         conversation.lastUpdate = new Date();
         await conversation.save();
-        return await this.getConversationById(conversation.id);
+        return createdMessage;
     }
 
     public setConversationSeenForUserAndMessage(conversationId: string, messageId: string, userId: string): Promise<IConversation | null> {
@@ -62,6 +64,12 @@ class ConversationRepository {
             return null;
         });
     }
+
+    public getConversationFromMessageId(messageId: string) : Promise<IConversation|null> {
+        return ConversationModel.findOne({messages: messageId})
+
+    }
+
 }
 
 export default ConversationRepository;
