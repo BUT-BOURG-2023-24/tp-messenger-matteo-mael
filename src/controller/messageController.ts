@@ -10,22 +10,17 @@ import {IConversation} from "../database/Mongo/Models/ConversationModel";
 
 class MessageController {
     public messageRepository = new MesssageRepository();
-    public async createMessage(conversationId: string, userId: string, content: string, messageReplyId: string | null) :Promise<ApiResponse> {
-        try {
+    public async createMessage(conversationId: string, userId: string, content: string, messageReplyId: string | null) :Promise<IMessage> {
             const newConversation :IMessage|null = await this.messageRepository.createMessage(conversationId, userId, content, messageReplyId);
-            return new ApiResponse(undefined, newConversation);
-        } catch (e) {
-            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
-        }
+            return newConversation
     }
 
-    public async getMessageById(messageId: string):Promise<ApiResponse> {
-        try {
-            const newConversation :IMessage|null = await this.messageRepository.getMessageById(messageId);
-            return new ApiResponse(undefined, newConversation);
-        } catch (e) {
-            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
-        }
+    public async getMessageById(messageId: string):Promise<IMessage> {
+            const conversation :IMessage|null = await this.messageRepository.getMessageById(messageId);
+            if (!conversation) {
+                throw new Error404(ErrorEnum.MESSAGE_NOT_FOUND);
+            }
+            return conversation;
     }
 
     public async deleteMessage(id: string): Promise<IMessage> {
@@ -41,6 +36,7 @@ class MessageController {
             if (!editMessage) {
                 throw new Error404(ErrorEnum.MESSAGE_NOT_FOUND);
             }
+
            return editMessage;
     }
 

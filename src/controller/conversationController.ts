@@ -6,7 +6,7 @@ import {CodeEnum, ErrorEnum} from "../response/errorEnum";
 import {IConversation} from "../database/Mongo/Models/ConversationModel";
 import ConversationRepository from "../repository/conversationRepository";
 import {IMessage} from "../database/Mongo/Models/MessageModel";
-import {Error404} from "../Error/error";
+import {Error404, Error500} from "../Error/error";
 
 class ConversationController {
 
@@ -16,36 +16,22 @@ class ConversationController {
         return await this.conversationRepository.getAllConversationsForUser(userId);
     }
 
-    public async getConversationById(conversationId: string): Promise<ApiResponse> {
-        try {
+    public async getConversationById(conversationId: string): Promise<IConversation> {
             const conversation = await this.conversationRepository.getConversationById(
                 conversationId
             );
             if (!conversation) {
-                return new ApiResponse(new ErrorResponse(CodeEnum.NOT_FOUND, ErrorEnum.CONVERSATION_NOT_FOUND));
+               throw new Error404(ErrorEnum.CONVERSATION_NOT_FOUND);
             }
-            return new ApiResponse(undefined, conversation);
-        } catch (err) {
-            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
-        }
+            return conversation;
     }
 
-    public async createConversation(concernedUsersIds: string[], userId?: string): Promise<ApiResponse> {
-        try {
-            if (!concernedUsersIds) {
-                return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.USERS_NOT_FOUND));
+    public async createConversation(concernedUsersIds: string[]): Promise<IConversation> {
+            const newConversation: IConversation | null = await this.conversationRepository.createConversation(concernedUsersIds);
+            if (!newConversation) {
+                throw new Error500(ErrorEnum.INTERNAL_SERVER_ERROR);
             }
-            if (!userId) {
-                return new ApiResponse(new ErrorResponse(CodeEnum.BAD_REQUEST, ErrorEnum.AUTHENTICATION_NEEDED));
-            }
-            concernedUsersIds.push(userId);
-            const newConversation: IConversation | null = await this.conversationRepository.createConversation(
-                concernedUsersIds
-            );
-            return new ApiResponse(undefined, newConversation);
-        } catch (err) {
-            return new ApiResponse(new ErrorResponse(CodeEnum.INTERNAL_SERVER_ERROR, ErrorEnum.INTERNAL_SERVER_ERROR));
-        }
+           return newConversation;
     }
 
     public async addMessageToConversation(messageContent: string, conversationId: string, userId: string, messageReplyId?: string): Promise<IMessage> {
